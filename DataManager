@@ -1,69 +1,76 @@
 public class DataManager {
+
+	int firstTransferSize;
+	int firstTransferTime;
+	int diskSize;
 	
-	int[] tape_DiskTransferSizeA;
-	int[] tape_DiskTransferTimeA;
-	int[] diskSizeA;
-	int[] disk_MemoryTransferSizeA;
-	int[] disk_MemoryTransferTimeA;
-	int[] memorySizeA;
-	int[] inputSpaceA;
-	int[] DMAA;
+	int secondTransferSize;
+	int secondTransferTime;
+	int memorySize;
+	
+	int inputSpace;
+	int DMA;
+	//////////////////////////////////
+	int runningSize1;
+	int runningTime1;
+	int runningStorage1;
+	int runningSize2;
+	int runningTime2;
+	int runningStorage2;
+	int TIME;
 	int[] jobLine;
-	
 	
 	public void retrieveFile() throws FileNotFoundException {
 		
 		Scanner scan = new Scanner(new File("data.txt"));
 		String returnValue = "";
-		
+/////////////////////////////////////////////////////////////////////////////////TRANSFER 1
 		//secondary(tape) to primary(disk) transfer SIZE
-		int tape_DiskTransferSize = scan.nextInt();
-		returnValue += "Tape to Disk Transfer Size: " + tape_DiskTransferSize + "\n";
+		firstTransferSize = scan.nextInt();
+		returnValue += "Tape to Disk Transfer Size: " + firstTransferSize + "\n";
 				
 		//secondary(tape) to primary(disk) transfer TIME
-		int tape_DiskTransferTime = scan.nextInt();
-		returnValue += "Tape to Disk Transfer Time: " + tape_DiskTransferTime + "\n";
+		firstTransferTime = scan.nextInt();
+		returnValue += "Tape to Disk Transfer Time: " + firstTransferTime + "\n";
 		
 		//primary(disk) SIZE
-		int diskSize = scan.nextInt();
+		diskSize = scan.nextInt();
 		returnValue += "Disk Size: " + diskSize + "\n";
-		
+/////////////////////////////////////////////////////////////////////////////////TRANSFER 2
 		//primary(disk) to memory transfer SIZE
-		int disk_MemoryTransferSize = scan.nextInt();
-		returnValue += "Disk to Memory Transfer Size: " + disk_MemoryTransferSize + "\n";
+		secondTransferSize = scan.nextInt();
+		returnValue += "Disk to Memory Transfer Size: " + secondTransferSize + "\n";
 		
 		//primary(disk) to memory transfer TIME
-		int disk_MemoryTransferTime = scan.nextInt();
-		returnValue += "Disk to Memory Transfer Time: " + disk_MemoryTransferTime + "\n";
-		
+		secondTransferTime = scan.nextInt();
+		returnValue += "Disk to Memory Transfer Time: " + secondTransferTime + "\n";
+
 		//memory SIZE
-		int memorySize = scan.nextInt();
+		memorySize = scan.nextInt();
 		returnValue += "Memory Size: " + memorySize + "\n";
-		
+////////////////////////////////////////////////////////////////////////////////////DETAILS		
 		//job input space
-		int inputSpace = scan.nextInt();
+		inputSpace = scan.nextInt();
 		returnValue += "Job Input Space Size: " + inputSpace + "\n";
 		
 		//DMA buffer transfer SIZE
-		int DMA = scan.nextInt();
+		DMA = scan.nextInt();
 		returnValue += "DMA Buffer Transfer Size: " + DMA + "\n";
+		
+		//Running Units
+		runningSize1 = firstTransferSize;
+		runningTime1 = firstTransferTime;
+		runningStorage1 = diskSize;
+		runningSize2 = secondTransferSize;
+		runningTime2 = secondTransferTime;
+		runningStorage2 = memorySize;
 		
 		//count Tokens in job line
 		scan.nextLine();
 		String str = scan.nextLine();
 		StringTokenizer line = new StringTokenizer(str);
 		int lineSize = line.countTokens();
-				
-		//initialize arrays
-		tape_DiskTransferSizeA = new int[tape_DiskTransferSize];
-		tape_DiskTransferTimeA = new int[tape_DiskTransferTime];
-		diskSizeA = new int[diskSize];
-		disk_MemoryTransferSizeA = new int[disk_MemoryTransferSize];
-		disk_MemoryTransferTimeA = new int[disk_MemoryTransferTime];
-		memorySizeA = new int[memorySize];
-		inputSpaceA = new int[inputSpace];
-		DMAA = new int[DMA];
-		
+////////////////////////////////////////////////////////////////////////////////////JOB(S) DESCRIPTION		
 		//initialize job array
 		jobLine = new int[lineSize];
 		int counter = 0;
@@ -100,14 +107,61 @@ public class DataManager {
 		System.out.println(returnValue);
 	}
 	
+	
+/////////////////////////////////////////////////////////////////////////////////PERFORM TASKS
 	public void performTasks()
 	{
+		
 		for(int i = 0; i < jobLine.length-1; i=i+2)
 		{
+			int thisTIME = jobLine[i];
+			int thisDATA = jobLine[i+1];
 			
+			TIME+= thisTIME;
+			
+			transfer1(thisDATA);
 		}
+		int last = jobLine.length;
+		TIME += jobLine[last-1];
 		
 	}
-	
+/////////////////////////////////////////////////////////////////////////////////TRANSFER 1
+	public void transfer1(int data)
+	{
+		//carry out first transfer
+		runningSize1 = firstTransferSize - data;
+		runningTime1 += firstTransferTime;
+		runningStorage1 = diskSize - data;
+		
+		//move to second transfer
+		transfer2(runningStorage1);
+		
+		
+	}
+/////////////////////////////////////////////////////////////////////////////////TRANSFER 2
+	public void transfer2(int data)
+	{
+		//restore disk storage
+		runningStorage1 = diskSize;
+		
+		//carry out second transfer
+		runningSize2 = secondTransferSize - data;
+		runningTime2 += secondTransferTime;
+		runningStorage2 = memorySize - data;
+		
+	}
+/////////////////////////////////////////////////////////////////////////////////FINAL TIME
+	public void finalTime()
+	{
+		runningTime1 = runningTime1 - firstTransferTime;
+		runningTime2 = runningTime2 - secondTransferTime;
+		
+		TIME += runningTime1 + runningTime2;
+		System.out.println();
+		System.out.println("Run1 Time: " + runningTime1);
+		System.out.println("Run2 Time: " + runningTime2);
+		System.out.println("CPU Burst Time: " + (TIME - (runningTime1+runningTime2) ) );
+		System.out.println("TOTAL Time: " + TIME);
+	}
 	
 }
